@@ -34,14 +34,14 @@ def predictRoute():
     result = clApp.objectDetection.getPrediction()
     return jsonify([result])
 
-if __name__ == "__main__":
+'''if __name__ == "__main__":
     clApp = ClientApp()
     app.run(host='127.0.0.1', port=8000, debug=True)
-'''if __name__ == "__main__":
-    #    port = int(os.getenv("PORT"))
-    port = int(os.getenv("PORT",6000))
+'''
+if __name__ == "__main__":
+    port = int(os.getenv("PORT"))
+    #port = int(os.getenv("PORT",6000))
     clApp = ClientApp()
     host = '0.0.0.0'
     httpd = simple_server.make_server(host=host,port=port, app=app)
     httpd.serve_forever()
-'''
