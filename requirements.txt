@@ -1,0 +1,5 @@
+Flask==2.0.1
+Flask-Cors==3.0.10
+tesserocr
+Pillow==6.2.1
+gunicorn==20.0.4

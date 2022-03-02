@@ -1,0 +1,59 @@
+version: 2.1
+orbs:
+  heroku: circleci/heroku@1.0.1
+jobs:
+  build-and-test:
+    executor: heroku/default
+    docker:
+      - image: circleci/python:3.6.2-stretch-browsers
+        auth:
+          username: mydockerhub-user
+          password: $DOCKERHUB_PASSWORD  # context / project UI env-var reference
+    steps:
+      - checkout
+      - restore_cache:
+          key: deps1-{{ .Branch }}-{{ checksum "requirements.txt" }}
+      - run:
+          name: declaring docker image name
+          command: |
+            echo 'export TAG=0.1.${CIRCLE_BUILD_NUM}' >> $BASH_ENV
+            echo 'export IMAGE_NAME=ocr1' >> $BASH_ENV
+
+      
+      - setup_remote_docker:
+          version: 19.03.13
+      - run:
+          name: Build and push Docker image
+          command: |
+            docker build -t $DOCKERHUB_USER/$IMAGE_NAME:$TAG .
+            docker login -u $DOCKERHUB_USER -p $DOCKER_HUB_PASSWORD_USER docker.io
+            docker push $DOCKERHUB_USER/$IMAGE_NAME:$TAG
+  deploy:
+    executor: heroku/default
+    steps:
+      - checkout
+      - run:
+          name: Storing previous commit
+          command: |
+            git rev-parse HEAD > ./commit.txt
+      - heroku/install
+      - setup_remote_docker:
+          version: 18.06.0-ce
+      - run:
+          name: Pushing to heroku registry
+          command: |
+            heroku container:login
+            heroku container:push web -a $HEROKU_APP_NAME
+            heroku container:release web -a $HEROKU_APP_NAME
+
+workflows:
+  build-test-deploy:
+    jobs:
+      - build-and-test
+      - deploy:
+          requires:
+            - build-and-test
+          filters:
+            branches:
+              only:
+                - main
